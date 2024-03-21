@@ -29,6 +29,9 @@ defmodule Finch.HTTP1.Conn do
     {:ok, conn}
   end
 
+  def connect(%{mint: nil, port: nil} = conn, name),
+    do: {:error, conn, %Mint.TransportError{reason: "Invalid URI: port is nil"}}
+
   def connect(%{mint: nil} = conn, name) do
     meta = %{
       scheme: conn.scheme,
