@@ -29,10 +29,30 @@ defmodule Finch.HTTP1.Conn do
     {:ok, conn}
   end
 
-  def connect(%{mint: nil, port: nil} = conn, name),
-    do: {:error, conn, %Mint.TransportError{reason: "Invalid URI: port is nil"}}
+  def connect(%{mint: nil, scheme: nil} = conn, name),
+    do: {:error, conn, %Mint.TransportError{reason: "scheme is nil"}}
 
-  def connect(%{mint: nil} = conn, name) do
+  def connect(%{mint: nil, host: nil} = conn, name),
+    do: {:error, conn, %Mint.TransportError{reason: "host is nil"}}
+
+  def connect(%{mint: nil, port: nil} = conn, name),
+    do: {:error, conn, %Mint.TransportError{reason: "port is nil"}}
+
+  def connect(%{mint: nil, host: host} = conn, name) when is_binary(host) do
+    if is_visible_string?(host) do
+      connect_mint(conn, name)
+    else
+      {:error, conn, %Mint.TransportError{reason: "host contains invalid binary sequence"}}
+    end
+  end
+
+  defp is_visible_string?(str) do
+    str
+    |> to_charlist()
+    |> :inet_parse.visible_string()
+  end
+
+  defp connect_mint(conn, name) do
     meta = %{
       scheme: conn.scheme,
       host: conn.host,
